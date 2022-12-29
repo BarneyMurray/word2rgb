@@ -26,7 +26,7 @@ def get_rgb_values(input: str):
         s = nn.Sigmoid()
         preds = s(logits).numpy()
 
-    return np.array(preds[0])
+    return preds[0]
 
 rgb = get_rgb_values('the night sky')
 print(rgb * 255)
