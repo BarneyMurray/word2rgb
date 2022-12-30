@@ -1,6 +1,7 @@
 import functools
 import json
 
+import pandas as pd
 from transformers import (AutoConfig, AutoModelForSequenceClassification,
                           AutoTokenizer, EarlyStoppingCallback,
                           IntervalStrategy, TrainingArguments)
@@ -10,6 +11,7 @@ from utils import MultiClassRegressionTrainer, compute_metrics
 
 num_epochs = 3
 batch_size = 16
+output_dir = './results/test'
 
 config = AutoConfig.from_pretrained(
     'distilbert-base-uncased', 
@@ -22,13 +24,15 @@ tokenize_fn = functools.partial(tokenizer, truncation=True, max_length=64, paddi
 model = AutoModelForSequenceClassification.from_pretrained("distilbert-base-uncased", config=config)
 
 # create train data
-df = get_df()
+df = pd.read_csv('./colorsurvey/processed_data.csv')
+
 train_dataset, val_dataset, test_dataset = (
     create_dataset(split, tokenize_fn) 
-    for split in get_train_val_test_splits(df, num_samples=200)
+    for split in get_train_val_test_splits(df)
     )
 
-eval_steps = len(train_dataset) // batch_size // 3  # evaluate three times per epoch
+evaluations_per_epoch = 10
+eval_steps = len(train_dataset) // batch_size // evaluations_per_epoch  # evaluate every n steps
 
 training_args = TrainingArguments(
     output_dir='./results',
@@ -58,10 +62,10 @@ trainer = MultiClassRegressionTrainer(
 
 trainer.train()
 metrics = trainer.evaluate(test_dataset, metric_key_prefix='test')
-json.dump(metrics, open('./results/test/test_results.json', 'w'))
+json.dump(metrics, open(f'{output_dir}/test_results.json', 'w'))
 
-trainer.save_model('./results/test')
-tokenizer.save_pretrained('./results/test')
+trainer.save_model(output_dir)
+tokenizer.save_pretrained(output_dir)
 
 
 
