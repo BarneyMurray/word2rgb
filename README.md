@@ -1,4 +1,4 @@
-# xkcd color prediction
+# Word2RGB
 
 This project is inspired by (and made possible via) Randall Munroe's [color survey](https://blog.xkcd.com/2010/05/03/color-survey-results/). The survey asked people to name, in free text, random colors sampled from the RGB space. 
 
