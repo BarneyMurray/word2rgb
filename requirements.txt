@@ -4,3 +4,5 @@ pandas
 evaluate
 scikit-learn
 matplotlib
+accelerate
+optimum[exporters,onnxruntime]
