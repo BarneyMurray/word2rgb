@@ -28,7 +28,7 @@ class MultiClassRegressionTrainer(Trainer):
         logits = outputs.get("logits")
 
         sigmoid = nn.Sigmoid()
-        normalised_logits = sigmoid(logits).to(torch.float64)
+        normalised_logits = sigmoid(logits).to(torch.float32)
 
         loss_fct = nn.MSELoss()
         loss = loss_fct(normalised_logits.view(-1), labels.view(-1))
@@ -48,7 +48,7 @@ class ColorPredictionDataset(torch.utils.data.Dataset):
 
     def __getitem__(self, idx):
         item = self.tokenize_fn(self.texts[idx])
-        item['labels'] = torch.tensor(self.labels[idx])
+        item['labels'] = torch.tensor(self.labels[idx], dtype=torch.float32)
         return item
 
     def __len__(self):
