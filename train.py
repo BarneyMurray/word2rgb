@@ -5,9 +5,12 @@ import pandas as pd
 from transformers import (AutoConfig, AutoModelForSequenceClassification,
                           AutoTokenizer, EarlyStoppingCallback,
                           IntervalStrategy, TrainingArguments)
+from accelerate import Accelerator
+import torch
 
 from get_train_data import create_dataset, get_df, get_train_val_test_splits
 from utils import MultiClassRegressionTrainer, compute_metrics
+
 
 num_epochs = 3
 batch_size = 16
@@ -18,10 +21,20 @@ config = AutoConfig.from_pretrained(
     num_labels=3
     )
 
+if torch.cuda.is_available():
+    device = torch.device("cuda")
+elif torch.backends.mps.is_available():
+    device = torch.device("mps")
+else:
+    device = torch.device("cpu")
+
+accelerator = Accelerator(device)
+
 tokenizer = AutoTokenizer.from_pretrained("distilbert-base-uncased")
 tokenize_fn = functools.partial(tokenizer, truncation=True, max_length=64, padding='max_length')
 
 model = AutoModelForSequenceClassification.from_pretrained("distilbert-base-uncased", config=config)
+model = accelerator.prepare(model)
 
 # create train data
 df = pd.read_csv('./colorsurvey/processed_data.csv')
@@ -60,12 +73,9 @@ trainer = MultiClassRegressionTrainer(
     callbacks=[EarlyStoppingCallback(early_stopping_patience=3)]
 )
 
-trainer.train()
+trainer.train(resume_from_checkpoint=True)
 metrics = trainer.evaluate(test_dataset, metric_key_prefix='test')
 json.dump(metrics, open(f'{output_dir}/test_results.json', 'w'))
 
 trainer.save_model(output_dir)
 tokenizer.save_pretrained(output_dir)
-
-
-
