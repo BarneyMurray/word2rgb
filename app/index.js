@@ -1,5 +1,16 @@
 import { AutoModel, AutoTokenizer } from 'https://cdn.jsdelivr.net/npm/@xenova/transformers@2.17.0';
 
+
+const loader = document.getElementById("loader")
+
+// wait for tokenizer and model to load, then hide loader
+const tokenizer = await AutoTokenizer.from_pretrained('BarneyMurray0/word2rgb');
+const model = await AutoModel.from_pretrained('BarneyMurray0/word2rgb');
+
+loader.style.display = 'none'
+
+document.getElementById('predictButton').addEventListener('click', predictRGB);
+
 function applySigmoid(logits) {
     return logits.map(value => 1 / (1 + Math.exp(-value)));
 }
@@ -25,9 +36,6 @@ export async function predictRGB() {
         return;
     }
 
-    let tokenizer = await AutoTokenizer.from_pretrained('BarneyMurray0/word2rgb');
-    let model = await AutoModel.from_pretrained('BarneyMurray0/word2rgb');
-
     let inputs = await tokenizer(textInput);
     let { logits } = await model(inputs);
 
@@ -41,7 +49,3 @@ function updateColorSquare(rgb) {
     let colorSquare = document.getElementById('colorSquare');
     colorSquare.style.backgroundColor = `rgb(${rgb[0]}, ${rgb[1]}, ${rgb[2]})`;
 }
-
-document.addEventListener('DOMContentLoaded', function() {
-    document.getElementById('predictButton').addEventListener('click', predictRGB);
-})
